@@ -1,52 +1,51 @@
-# API Stress Test Framework
+# API Test Framework
 
-自動化 API 壓力測試框架，只需提供 API 定義 (YAML/JSON)，即可自動產生壓力測試案例並執行。
+自動化 API 測試框架，支援 **HTTP REST API** 與 **WebSocket (WSS)** 測試。
+只需提供 API 定義 (YAML/JSON)，即可自動產生 pytest 測試案例並執行。
 
 ## Architecture / 架構圖
 
 ```
- ┌──────────────────────────────────────────────────────────────────────┐
- │                        使用者提供 API 定義                            │
- │                  api_definitions/*.yaml (或 .json)                   │
- │                                                                      │
- │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────┐ │
- │  │ single_api.yaml  │  │ multi_api.yaml   │  │ scenario.yaml      │ │
- │  │ (單一 API)        │  │ (多個 API)        │  │ (API 串接情境)      │ │
- │  └──────────────────┘  └──────────────────┘  └────────────────────┘ │
- └─────────────────────────────┬────────────────────────────────────────┘
-                               │
-                               ▼
- ┌──────────────────────────────────────────────────────────────────────┐
- │                      API Definition Parser                           │
- │               stress_test/core/api_parser.py                         │
- │                                                                      │
- │  • 讀取 YAML / JSON API 定義檔                                       │
- │  • 解析端點 URL、HTTP Method、Headers、Body、Query Params             │
- │  • 產生 StressTestConfig 資料結構                                     │
- └─────────────────────────────┬────────────────────────────────────────┘
-                               │
-                               ▼
- ┌──────────────────────────────────────────────────────────────────────┐
- │                  Auto Test Case Generator                            │
- │            stress_test/generators/locust_generator.py                 │
- │                                                                      │
- │  ┌──────────────┐  ┌───────────────┐  ┌──────────────────┐          │
- │  │ Single Mode  │  │  Multi Mode   │  │  Scenario Mode   │          │
- │  │ 單一端點壓測  │  │ 多端點加權壓測 │  │ API 串接流程壓測  │          │
- │  └──────────────┘  └───────────────┘  └──────────────────┘          │
- │                                                                      │
- │  → 自動產生 Locust Python 測試檔 → generated_tests/                   │
- └────────┬───────────────────┬────────────────────┬────────────────────┘
-          │                   │                    │
-          ▼                   ▼                    ▼
- ┌────────────────┐  ┌────────────────┐   ┌────────────────────┐
- │   Test Data    │  │  Stress Test   │   │  Report Generator  │
- │   (解耦合)     │  │    Engine      │   │                    │
- │                │  │                │   │  • HTML Report      │
- │  test_data/    │  │  Locust 引擎   │   │  • CSV Stats        │
- │  *.yaml/json   │  │  (headless or  │   │  • JSON Summary     │
- │  *.csv         │  │   web UI)      │   │                    │
- └────────────────┘  └────────────────┘   └────────────────────┘
+ ┌───────────────────────────────────────────────────────────────┐
+ │                    使用者提供 API 定義                          │
+ │              api_definitions/*.yaml (或 .json)                │
+ │                                                               │
+ │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  │
+ │  │  HTTP APIs     │  │  WSS APIs      │  │  Scenario      │  │
+ │  │  (REST 端點)   │  │  (WebSocket)   │  │  (串接流程)    │  │
+ │  └────────────────┘  └────────────────┘  └────────────────┘  │
+ └──────────────────────────┬────────────────────────────────────┘
+                            │
+                            ▼
+ ┌───────────────────────────────────────────────────────────────┐
+ │                    API Definition Parser                       │
+ │              api_test/core/api_parser.py                       │
+ │                                                               │
+ │  • 讀取 YAML / JSON API 定義檔                                │
+ │  • 解析 HTTP endpoints (GET/POST/PUT/PATCH/DELETE)            │
+ │  • 解析 WSS endpoints (connect / send / receive)              │
+ │  • 解析 Scenarios (多 API 串接)                                │
+ └──────────────────────────┬────────────────────────────────────┘
+                            │
+                            ▼
+ ┌───────────────────────────────────────────────────────────────┐
+ │                 Auto Test Case Generator                      │
+ │           api_test/generators/pytest_generator.py              │
+ │                                                               │
+ │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  │
+ │  │  HTTP Tests    │  │  WSS Tests     │  │ Scenario Tests │  │
+ │  │  (requests)    │  │ (websocket)    │  │ (多 API 驗證)  │  │
+ │  └────────────────┘  └────────────────┘  └────────────────┘  │
+ │                                                               │
+ │  → 自動產生 pytest 測試檔 → generated_tests/                   │
+ └─────────┬──────────────────┬──────────────────┬───────────────┘
+           │                  │                  │
+           ▼                  ▼                  ▼
+ ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+ │  Test Data   │    │    pytest    │    │   Reports    │
+ │  (解耦合)    │    │    Engine    │    │  (HTML/終端)  │
+ │  test_data/  │    │              │    │  reports/    │
+ └──────────────┘    └──────────────┘    └──────────────┘
 ```
 
 ## Flow / 執行流程
@@ -56,46 +55,44 @@
  2. (可選) 放置測試資料到 test_data/
                 │
                 ▼
- 3. python run_stress_test.py
+ 3. python run_tests.py
                 │
                 ├──→ 解析 api_definitions/ 下所有 YAML
-                ├──→ 自動產生 Locust 測試檔到 generated_tests/
-                ├──→ 執行壓力測試 (Locust headless)
-                └──→ 產生報表到 reports/
+                ├──→ 自動產生 pytest 測試檔到 generated_tests/
+                └──→ 執行 pytest 並輸出結果
                         │
                         ▼
  4. 查看結果:
-    • reports/*_stats.csv     ← 詳細數據
-    • reports/*.html          ← 視覺化報告
-    • reports/*_summary.json  ← 摘要結果
+    • 終端直接顯示 pass / fail
+    • reports/report.html  (加 --html 旗標)
 ```
 
 ## Directory Structure / 目錄結構
 
 ```
 apiTest/
-├── api_definitions/          # API 定義檔 (YAML/JSON) ← 使用者在此新增
-│   ├── example_single_api.yaml
-│   ├── example_multi_api.yaml
-│   └── example_scenario_chain.yaml
+├── api_definitions/              # API 定義檔 ← 使用者在此新增
+│   ├── example_http.yaml             # HTTP REST API 範例
+│   ├── example_wss.yaml              # WebSocket API 範例
+│   └── example_scenario.yaml         # 多 API 串接範例
 │
-├── test_data/                # 測試資料 (與 API 定義解耦合) ← 使用者在此新增
-│   └── example_users.yaml
+├── test_data/                    # 測試資料 (與定義完全解耦合) ← 使用者在此新增
+│   └── example_posts.yaml
 │
-├── stress_test/              # 框架核心程式碼
+├── api_test/                     # 框架核心
 │   ├── core/
-│   │   ├── api_parser.py         # API 定義解析器
-│   │   ├── test_data_loader.py   # 測試資料載入器
-│   │   └── engine.py             # 壓力測試引擎 (Locust wrapper)
-│   ├── generators/
-│   │   └── locust_generator.py   # 自動測試案例產生器
-│   └── reports/
-│       └── report_generator.py   # 報表產生器
+│   │   ├── api_parser.py             # API 定義解析器
+│   │   └── test_data_loader.py       # 測試資料載入器
+│   ├── executors/
+│   │   ├── http_executor.py          # HTTP 測試執行器 (requests)
+│   │   └── wss_executor.py           # WebSocket 測試執行器
+│   └── generators/
+│       └── pytest_generator.py       # pytest 測試案例自動產生器
 │
-├── generated_tests/          # 自動產生的 Locust 測試檔 (git ignored)
-├── reports/                  # 測試報告輸出 (git ignored)
-├── run_stress_test.py        # 主程式入口 (CLI)
-└── requirements.txt          # Python 套件依賴
+├── generated_tests/              # 自動產生的 pytest 檔 (git ignored)
+├── reports/                      # 測試報告 (git ignored)
+├── run_tests.py                  # 主程式入口 (CLI)
+└── requirements.txt
 ```
 
 ## Quick Start / 快速開始
@@ -104,97 +101,129 @@ apiTest/
 # 1. 安裝套件
 pip install -r requirements.txt
 
-# 2. 執行範例壓力測試 (使用 example API definitions)
-python run_stress_test.py
+# 2. 執行所有 API 測試
+python run_tests.py
 
 # 3. 只產生測試檔不執行
-python run_stress_test.py --generate-only
+python run_tests.py --generate-only
 
-# 4. 指定單一 API 定義檔
-python run_stress_test.py --api-file api_definitions/example_single_api.yaml
+# 4. 測試單一 API 定義
+python run_tests.py --api-file api_definitions/example_http.yaml
 
-# 5. 指定模式 (single / multi / scenario / all)
-python run_stress_test.py --mode scenario
+# 5. 帶 HTML 報告
+python run_tests.py --html
 
-# 6. 自訂壓測參數
-python run_stress_test.py --users 50 --spawn-rate 10 --run-time 2m
+# 6. Verbose 輸出
+python run_tests.py -v
 
-# 7. 啟動 Locust Web UI (可視化操作)
-python run_stress_test.py --web-ui
+# 7. 只跑符合關鍵字的測試
+python run_tests.py -k "list_posts"
 ```
 
 ## API Definition Format / API 定義格式
 
-在 `api_definitions/` 下新增 YAML 檔，格式如下：
+### HTTP API
 
 ```yaml
-name: "My API Test"
+name: "My API"
 base_url: "https://api.example.com"
 
 default_headers:
   Content-Type: "application/json"
   Authorization: "Bearer YOUR_TOKEN"
 
-# 引用 test_data/ 下的測試資料 (解耦合)
-test_data_file: "my_test_data.yaml"
+test_data_file: "my_data.yaml"    # 引用 test_data/ 下的資料
 
-stress_config:
-  users: 20          # 併發使用者數
-  spawn_rate: 5      # 每秒產生使用者速率
-  run_time: "1m"     # 測試持續時間
-
-endpoints:
-  - name: "get_items"
-    url: "/api/v1/items"
+http_endpoints:
+  - name: "get_users"
+    url: "/api/v1/users"
     method: "GET"
     expected_status: 200
+    expected_body:              # 驗證回傳 JSON 部分欄位
+      success: true
     timeout: 10
-    weight: 5          # 權重 (multi mode 使用)
-    tags: ["read"]
 
-  - name: "create_item"
-    url: "/api/v1/items"
+  - name: "create_user"
+    url: "/api/v1/users"
     method: "POST"
     expected_status: 201
-    timeout: 15
-    weight: 2
     body:
-      name: "test item"
-      value: 100
-    tags: ["write"]
+      name: "test"
+      email: "test@example.com"
+```
+
+### WebSocket API
+
+```yaml
+name: "My WSS"
+base_url: "wss://ws.example.com"
+
+wss_endpoints:
+  - name: "echo_test"
+    url: "wss://ws.example.com/socket"
+    timeout: 10
+    messages:
+      - action: "send"             # 純文字發送
+        data: "hello"
+      - action: "receive"          # 接收並驗證
+        expected: "hello"
+      - action: "send_json"        # JSON 發送
+        data: { "type": "ping" }
+      - action: "receive_json"     # 接收 JSON 並驗證部分欄位
+        expected: { "type": "pong" }
+```
+
+### Scenario (多 API 串接)
+
+```yaml
+name: "User Flow"
+base_url: "https://api.example.com"
+
+http_endpoints:
+  - name: "login"
+    url: "/auth/login"
+    method: "POST"
+    expected_status: 200
+    body: { "username": "test", "password": "pass" }
+
+  - name: "get_profile"
+    url: "/users/me"
+    method: "GET"
+    expected_status: 200
+
+scenarios:
+  - name: "login_then_profile"
+    steps:
+      - name: "Login"
+        endpoint_ref: "login"           # 引用上面定義的 endpoint
+        save:                           # 從回應中擷取值
+          token: "data.access_token"
+      - name: "Get Profile"
+        endpoint_ref: "get_profile"
 ```
 
 ## Test Data Format / 測試資料格式
 
-在 `test_data/` 下新增資料檔 (YAML/JSON/CSV)，與 API 定義完全解耦合：
+放在 `test_data/` 下，與 API 定義完全解耦合：
 
 ```yaml
-# test_data/my_test_data.yaml
 data:
-  - userId: 1
-    name: "User A"
-    email: "a@test.com"
-  - userId: 2
-    name: "User B"
-    email: "b@test.com"
+  - name: "case_1"
+    userId: 1
+    title: "Test A"
+  - name: "case_2"
+    userId: 2
+    title: "Test B"
 ```
 
-測試產生器會自動將資料中符合的 key 合併到 request body 中。
-
-## Test Modes / 測試模式
-
-| Mode       | Description                          | Use Case                    |
-|------------|--------------------------------------|-----------------------------|
-| `single`   | 對第一個端點做壓力測試                 | 單一 API 效能基準測試         |
-| `multi`    | 對所有端點以 weight 權重做壓力測試     | 模擬真實混合流量              |
-| `scenario` | 按順序串接執行所有端點                 | 模擬使用者操作流程            |
-| `all`      | 同時產生上述三種測試                   | 完整測試覆蓋                 |
+當 endpoint 有 `body` 且定義了 `test_data_file` 時，
+框架會用 `@pytest.mark.parametrize` 自動對每筆資料產生獨立測試。
 
 ## Adding New Tests / 新增測試
 
 只需兩步驟：
 
-1. 在 `api_definitions/` 新增一個 YAML 檔描述你的 API
-2. (可選) 在 `test_data/` 新增對應的測試資料
+1. 在 `api_definitions/` 新增一個 YAML 描述你的 API
+2. (可選) 在 `test_data/` 新增測試資料
 
-然後執行 `python run_stress_test.py`，框架會自動產生並執行壓力測試。
+執行 `python run_tests.py`，測試案例自動產生並執行。

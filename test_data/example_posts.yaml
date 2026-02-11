@@ -1,0 +1,18 @@
+# Test data for post-related API tests (decoupled from API definitions)
+# 每筆資料會自動合併到 request body 中
+
+data:
+  - name: "user_1_post"
+    userId: 1
+    title: "Test Post Alpha"
+    body: "Content from test data - user 1"
+
+  - name: "user_2_post"
+    userId: 2
+    title: "Test Post Beta"
+    body: "Content from test data - user 2"
+
+  - name: "user_3_post"
+    userId: 3
+    title: "Test Post Gamma"
+    body: "Content from test data - user 3"

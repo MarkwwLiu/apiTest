@@ -1,14 +1,10 @@
 """
 Test Data Loader
 
-Loads test data from the test_data/ directory. Test data is completely
-decoupled from API definitions and test logic, making it easy to swap
-datasets without modifying any test code.
+Loads test data from test_data/ directory.
+Data is completely decoupled from API definitions.
 
-Supported formats:
-- YAML (.yaml, .yml)
-- JSON (.json)
-- CSV (.csv)
+Supported formats: YAML, JSON, CSV
 """
 
 import csv
@@ -21,22 +17,15 @@ from typing import Any, Iterator
 import yaml
 
 
-class TestDataLoader:
-    """Loads and serves test data for stress tests."""
+class DataLoader:
+    """Loads and serves test data for API tests."""
 
     def __init__(self, data_dir: str = "test_data"):
         self.data_dir = data_dir
         self._cache: dict[str, list[dict[str, Any]]] = {}
 
     def load(self, filename: str) -> list[dict[str, Any]]:
-        """Load test data from a file. Results are cached.
-
-        Args:
-            filename: Name of the data file in test_data/ directory.
-
-        Returns:
-            List of data records (each record is a dict).
-        """
+        """Load test data from a file (cached)."""
         if filename in self._cache:
             return self._cache[filename]
 
@@ -49,25 +38,19 @@ class TestDataLoader:
         return data
 
     def get_random(self, filename: str) -> dict[str, Any]:
-        """Get a random record from the test data file."""
-        data = self.load(filename)
-        return random.choice(data)
+        """Get a random record from a data file."""
+        return random.choice(self.load(filename))
 
     def get_cycle(self, filename: str) -> Iterator[dict[str, Any]]:
-        """Get an infinite cycling iterator over test data records.
-
-        Useful for distributing data evenly across virtual users.
-        """
-        data = self.load(filename)
-        return itertools.cycle(data)
+        """Get an infinite cycling iterator over records."""
+        return itertools.cycle(self.load(filename))
 
     def get_by_index(self, filename: str, index: int) -> dict[str, Any]:
-        """Get a specific record by index (wraps around if out of range)."""
+        """Get a specific record by index (wraps around)."""
         data = self.load(filename)
         return data[index % len(data)]
 
     def _read_file(self, filepath: str) -> list[dict[str, Any]]:
-        """Read data from file based on extension."""
         if filepath.endswith((".yaml", ".yml")):
             return self._read_yaml(filepath)
         elif filepath.endswith(".json"):
@@ -75,7 +58,7 @@ class TestDataLoader:
         elif filepath.endswith(".csv"):
             return self._read_csv(filepath)
         else:
-            raise ValueError(f"Unsupported data file format: {filepath}")
+            raise ValueError(f"Unsupported data format: {filepath}")
 
     def _read_yaml(self, filepath: str) -> list[dict[str, Any]]:
         with open(filepath, "r", encoding="utf-8") as f:

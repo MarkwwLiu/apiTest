@@ -13,6 +13,7 @@ env/
 .DS_Store
 reports/*.html
 reports/*.csv
+reports/*.json
 generated_tests/*.py
 !generated_tests/.gitkeep
 !reports/.gitkeep

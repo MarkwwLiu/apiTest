@@ -1,0 +1,51 @@
+# Example: Multi-API scenario (chain) test
+# 模擬使用者操作流程：建立文章 → 取得文章 → 新增留言
+
+name: "Example Scenario"
+base_url: "https://jsonplaceholder.typicode.com"
+
+default_headers:
+  Content-Type: "application/json"
+  Accept: "application/json"
+
+http_endpoints:
+  - name: "create_post"
+    url: "/posts"
+    method: "POST"
+    expected_status: 201
+    timeout: 15
+    body:
+      title: "scenario test post"
+      body: "created by scenario test"
+      userId: 1
+
+  - name: "get_post"
+    url: "/posts/1"
+    method: "GET"
+    expected_status: 200
+    timeout: 10
+
+  - name: "create_comment"
+    url: "/posts/1/comments"
+    method: "POST"
+    expected_status: 201
+    timeout: 15
+    body:
+      name: "tester"
+      email: "test@example.com"
+      body: "scenario comment"
+
+scenarios:
+  - name: "create_then_comment"
+    tags: ["scenario", "flow"]
+    steps:
+      - name: "Step 1 - Create post"
+        endpoint_ref: "create_post"
+        save:
+          post_id: "id"
+
+      - name: "Step 2 - Verify post"
+        endpoint_ref: "get_post"
+
+      - name: "Step 3 - Add comment"
+        endpoint_ref: "create_comment"

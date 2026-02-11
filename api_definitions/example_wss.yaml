@@ -1,0 +1,31 @@
+# Example: WebSocket API test definition
+# 測試 WSS 端點的連線、發送、接收
+
+name: "Example WebSocket API"
+base_url: "wss://echo.websocket.org"
+
+wss_endpoints:
+  - name: "echo_text"
+    url: "wss://echo.websocket.org"
+    timeout: 10
+    messages:
+      - action: "send"
+        data: "hello from api test"
+      - action: "receive"
+        timeout: 5
+        expected: "hello from api test"
+    tags: ["wss", "echo"]
+
+  - name: "echo_json"
+    url: "wss://echo.websocket.org"
+    timeout: 10
+    messages:
+      - action: "send_json"
+        data:
+          type: "ping"
+          payload: "test123"
+      - action: "receive_json"
+        timeout: 5
+        expected:
+          type: "ping"
+    tags: ["wss", "echo", "json"]
