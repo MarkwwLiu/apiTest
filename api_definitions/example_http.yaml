@@ -1,0 +1,69 @@
+# Example: HTTP API test definition
+# 放入你的 API 定義，框架會自動產生 pytest 測試案例
+
+name: "Example HTTP API"
+base_url: "https://jsonplaceholder.typicode.com"
+
+default_headers:
+  Content-Type: "application/json"
+  Accept: "application/json"
+
+# 引用 test_data/ 下的測試資料 (解耦合)
+test_data_file: "example_posts.yaml"
+
+http_endpoints:
+  - name: "list_posts"
+    url: "/posts"
+    method: "GET"
+    expected_status: 200
+    timeout: 10
+    tags: ["read", "posts"]
+
+  - name: "get_single_post"
+    url: "/posts/1"
+    method: "GET"
+    expected_status: 200
+    timeout: 10
+    expected_body:
+      id: 1
+      userId: 1
+    tags: ["read", "posts"]
+
+  - name: "create_post"
+    url: "/posts"
+    method: "POST"
+    expected_status: 201
+    timeout: 15
+    body:
+      title: "default title"
+      body: "default body"
+      userId: 1
+    tags: ["write", "posts"]
+
+  - name: "update_post"
+    url: "/posts/1"
+    method: "PUT"
+    expected_status: 200
+    timeout: 15
+    body:
+      id: 1
+      title: "updated title"
+      body: "updated body"
+      userId: 1
+    tags: ["write", "posts"]
+
+  - name: "delete_post"
+    url: "/posts/1"
+    method: "DELETE"
+    expected_status: 200
+    timeout: 10
+    tags: ["write", "posts"]
+
+  - name: "get_comments_by_post"
+    url: "/comments"
+    method: "GET"
+    query_params:
+      postId: 1
+    expected_status: 200
+    timeout: 10
+    tags: ["read", "comments"]
