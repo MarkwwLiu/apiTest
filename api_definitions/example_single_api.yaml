@@ -1,0 +1,27 @@
+# Example: Single API stress test definition
+# Copy this file and modify it with your own API details
+
+name: "Example Single API Test"
+base_url: "https://jsonplaceholder.typicode.com"
+
+default_headers:
+  Content-Type: "application/json"
+  Accept: "application/json"
+
+# Reference to test data file in test_data/ directory (decoupled)
+test_data_file: "example_users.yaml"
+
+# Stress test parameters
+stress_config:
+  users: 10           # Number of concurrent virtual users
+  spawn_rate: 2       # Users spawned per second
+  run_time: "30s"     # Duration of the test
+
+endpoints:
+  - name: "get_posts"
+    url: "/posts"
+    method: "GET"
+    expected_status: 200
+    timeout: 10
+    weight: 1
+    tags: ["read", "posts"]

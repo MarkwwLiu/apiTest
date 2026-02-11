@@ -1,0 +1,34 @@
+# Example test data file (decoupled from API definitions)
+# This data can be referenced by any API definition via test_data_file field
+# The test generator will merge matching keys into request bodies
+
+data:
+  - userId: 1
+    title: "Stress Test Post Alpha"
+    body: "Content for stress testing - user 1"
+    name: "Test User 1"
+    email: "user1@stresstest.example.com"
+
+  - userId: 2
+    title: "Stress Test Post Beta"
+    body: "Content for stress testing - user 2"
+    name: "Test User 2"
+    email: "user2@stresstest.example.com"
+
+  - userId: 3
+    title: "Stress Test Post Gamma"
+    body: "Content for stress testing - user 3"
+    name: "Test User 3"
+    email: "user3@stresstest.example.com"
+
+  - userId: 4
+    title: "Stress Test Post Delta"
+    body: "Content for stress testing - user 4"
+    name: "Test User 4"
+    email: "user4@stresstest.example.com"
+
+  - userId: 5
+    title: "Stress Test Post Epsilon"
+    body: "Content for stress testing - user 5"
+    name: "Test User 5"
+    email: "user5@stresstest.example.com"
