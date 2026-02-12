@@ -114,7 +114,39 @@ python run_tests.py --api-file api_definitions/<file>.yaml -v --debug
 
 - 所有新增的 API 定義都必須能通過 `python run_tests.py` 執行
 - 測試必須是可重複執行的（不依賴外部狀態或執行順序）
-- 使用 tags 分類測試（read / write / scenario 等）
+
+### Tag 命名規則
+
+每個測試案例的 tags 必須包含**專屬 tag**（第一個）+ 分類 tags：
+
+```yaml
+tags: ["<endpoint_name>", "<操作類型>", "<資源類型>"]
+```
+
+- **第一個 tag = endpoint name**（專屬，用於單獨執行該測試）
+- 後續 tags = 分類用途（`read` / `write` / `posts` / `wss` / `scenario` 等）
+
+範例：
+```yaml
+# HTTP
+tags: ["list_posts", "read", "posts"]
+tags: ["create_post", "write", "posts"]
+
+# WSS
+tags: ["echo_text", "wss", "echo"]
+
+# Scenario
+tags: ["create_then_comment", "scenario", "flow"]
+```
+
+用法：
+```bash
+# 跑單一測試案例
+python run_tests.py --tags list_posts
+
+# 跑整個分類
+python run_tests.py --tags read
+```
 
 ---
 

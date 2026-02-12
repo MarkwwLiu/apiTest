@@ -17,7 +17,7 @@ wss_endpoints:
       - action: "receive"
         timeout: 5
         expected: "hello from api test"
-    tags: ["wss", "echo"]
+    tags: ["echo_text", "wss", "echo"]
 
   - name: "echo_json"
     url: "wss://echo.websocket.org"
@@ -31,7 +31,7 @@ wss_endpoints:
         timeout: 5
         expected:
           type: "ping"
-    tags: ["wss", "echo", "json"]
+    tags: ["echo_json", "wss", "echo", "json"]
 
   - name: "echo_with_wait"
     url: "wss://echo.websocket.org"
@@ -45,7 +45,7 @@ wss_endpoints:
         data: "second message"
       - action: "receive"
         timeout: 5
-    tags: ["wss", "echo"]
+    tags: ["echo_with_wait", "wss", "echo"]
 
   - name: "echo_ping_pong"
     url: "wss://echo.websocket.org"
@@ -53,4 +53,4 @@ wss_endpoints:
     messages:
       - action: "ping"
         data: "keepalive"
-    tags: ["wss", "heartbeat"]
+    tags: ["echo_ping_pong", "wss", "heartbeat"]

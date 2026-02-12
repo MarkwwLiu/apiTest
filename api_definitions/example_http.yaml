@@ -29,7 +29,7 @@ http_endpoints:
     method: "GET"
     expected_status: 200
     timeout: 10
-    tags: ["read", "posts"]
+    tags: ["list_posts", "read", "posts"]
 
   - name: "get_single_post"
     url: "/posts/1"
@@ -41,7 +41,7 @@ http_endpoints:
       userId: 1
       title: "type:string"     # 進階驗證: 型別檢查
       body: "exists:true"      # 進階驗證: 欄位存在檢查
-    tags: ["read", "posts"]
+    tags: ["get_single_post", "read", "posts"]
 
   - name: "create_post"
     url: "/posts"
@@ -53,7 +53,7 @@ http_endpoints:
       title: "default title"
       body: "default body"
       userId: 1
-    tags: ["write", "posts"]
+    tags: ["create_post", "write", "posts"]
 
   - name: "update_post"
     url: "/posts/1"
@@ -65,14 +65,14 @@ http_endpoints:
       title: "updated title"
       body: "updated body"
       userId: 1
-    tags: ["write", "posts"]
+    tags: ["update_post", "write", "posts"]
 
   - name: "delete_post"
     url: "/posts/1"
     method: "DELETE"
     expected_status: 200
     timeout: 10
-    tags: ["write", "posts"]
+    tags: ["delete_post", "write", "posts"]
 
   - name: "get_comments_by_post"
     url: "/comments"
@@ -83,4 +83,4 @@ http_endpoints:
     timeout: 10
     expected_headers:
       content-type: "regex:application/json"   # 進階驗證: Header regex
-    tags: ["read", "comments"]
+    tags: ["get_comments_by_post", "read", "comments"]
