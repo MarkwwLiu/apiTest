@@ -181,7 +181,7 @@ def test_{{ ep.name | replace(" ", "_") | replace("-", "_") | lower }}(http, dat
 {% if ep.upload_files %}
         upload_files={{ ep.upload_files | tojson }},
 {% endif %}
-        allow_redirects={{ ep.allow_redirects | tojson }},
+        allow_redirects={{ "True" if ep.allow_redirects else "False" }},
     )
     assert result.passed, f"FAILED {{ ep.name }}: {result.errors}"
 {% else %}
@@ -219,7 +219,7 @@ def test_{{ ep.name | replace(" ", "_") | replace("-", "_") | lower }}(http):
 {% if ep.upload_files %}
         upload_files={{ ep.upload_files | tojson }},
 {% endif %}
-        allow_redirects={{ ep.allow_redirects | tojson }},
+        allow_redirects={{ "True" if ep.allow_redirects else "False" }},
     )
     assert result.passed, f"FAILED {{ ep.name }}: {result.errors}"
 {% endif %}
@@ -236,6 +236,7 @@ Suite: {{ config.name }}
 WSS endpoints: {{ config.wss_endpoints | length }}
 """
 
+import json
 import os
 import sys
 
@@ -258,7 +259,8 @@ def wss():
 {% endfor %}
 def test_{{ ep.name | replace(" ", "_") | replace("-", "_") | lower }}(wss):
     """WSS {{ ep.url }}"""
-    messages = {{ ep.messages | map(attribute="__dict__") | list | tojson }}
+    messages = json.loads(\'\'\'{{ ep.messages | map(attribute="__dict__") | list | tojson }}\'\'\')
+
 
     result = wss.execute(
         name="{{ ep.name }}",

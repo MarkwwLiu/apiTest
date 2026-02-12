@@ -89,10 +89,13 @@ apiTest/
 │   ├── executors/
 │   │   ├── http_executor.py          # HTTP 執行器 (retry / auth / upload / 進階驗證)
 │   │   └── wss_executor.py           # WSS 執行器 (retry / binary / ping / wait)
+│   ├── exporters/
+│   │   └── standalone_exporter.py    # 匯出獨立可執行腳本
 │   └── generators/
 │       └── pytest_generator.py       # pytest 自動產生器 (含 conftest / JSON report)
 │
 ├── generated_tests/              # 自動產生的 pytest 檔 (git ignored)
+├── exports/                      # 匯出的獨立腳本 (git ignored)
 ├── reports/                      # 測試報告 (git ignored)
 ├── run_tests.py                  # 主程式入口 (CLI)
 └── requirements.txt
@@ -130,7 +133,45 @@ python run_tests.py --skip-tags write
 
 # 10. 用環境變數切換目標 API
 API_BASE_URL=https://staging.api.com API_TOKEN=xxx python run_tests.py
+
+# 11. 匯出獨立腳本 (拋棄式腳本)
+python run_tests.py --export generated_tests/test_example_http_api_http.py
+
+# 12. 指定匯出路徑
+python run_tests.py --export generated_tests/test_example_http_api_http.py --output /tmp/my_test.py
 ```
+
+## Standalone Export / 匯出獨立腳本
+
+將自動產生的測試檔匯出為**獨立可執行的單一 Python 檔案**。
+所有依賴（HttpExecutor、WssExecutor、測試資料、日誌設定、JSON 報告）全部內嵌在同一個檔案中，
+不需要安裝框架，只需要安裝基本套件（`pytest`, `requests`, `websocket-client`）即可執行。
+
+```bash
+# 1. 先產生測試檔
+python run_tests.py --generate-only
+
+# 2. 匯出指定的測試檔為獨立腳本
+python run_tests.py --export generated_tests/test_example_http_api_http.py
+
+# 3. 在任意機器上執行匯出的腳本
+pip install pytest requests websocket-client
+pytest exports/test_example_http_api_http_standalone.py -v
+
+# 4. 也可以搭配 debug 模式
+API_TEST_LOG_LEVEL=DEBUG pytest exports/test_example_http_api_http_standalone.py -v
+```
+
+匯出的腳本包含：
+- 所有 Executor 原始碼（HTTP / WSS）
+- 測試資料（直接內嵌為 Python literal）
+- Logging 設定 + JSON 報告 hook
+- 所有測試案例
+
+適用場景：
+- 將測試腳本交給其他團隊，不需安裝完整框架
+- CI/CD 中只需要單一檔案
+- 快速分享、一次性測試
 
 ## API Definition Format / API 定義格式
 

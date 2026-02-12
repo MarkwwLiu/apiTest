@@ -334,11 +334,11 @@ class HttpExecutor:
                     request_body=body,
                     retries=retries,
                 )
-        finally:
-            # Close file handles
-            if upload_files and "files" in kwargs:
-                for fh in kwargs["files"].values():
-                    fh.close()
+            finally:
+                # Close file handles
+                if upload_files and "files" in kwargs:
+                    for fh in kwargs["files"].values():
+                        fh.close()
 
         if response is None:
             return HttpResult(
