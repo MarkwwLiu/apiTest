@@ -2,11 +2,23 @@
 # 放入你的 API 定義，框架會自動產生 pytest 測試案例
 
 name: "Example HTTP API"
-base_url: "https://jsonplaceholder.typicode.com"
+base_url: "${API_BASE_URL:-https://jsonplaceholder.typicode.com}"
 
 default_headers:
   Content-Type: "application/json"
   Accept: "application/json"
+
+# (可選) Authentication
+# auth:
+#   type: "bearer"
+#   token: "${API_TOKEN}"
+
+# (可選) 全域 Retry 設定
+retry:
+  max_retries: 2
+  backoff: [1, 2, 4]
+  retry_on_status: [500, 502, 503]
+  retry_on_timeout: true
 
 # 引用 test_data/ 下的測試資料 (解耦合)
 test_data_file: "example_posts.yaml"
@@ -27,12 +39,15 @@ http_endpoints:
     expected_body:
       id: 1
       userId: 1
+      title: "type:string"     # 進階驗證: 型別檢查
+      body: "exists:true"      # 進階驗證: 欄位存在檢查
     tags: ["read", "posts"]
 
   - name: "create_post"
     url: "/posts"
     method: "POST"
     expected_status: 201
+    max_response_time: 5000    # 回應時間不超過 5 秒
     timeout: 15
     body:
       title: "default title"
@@ -66,4 +81,6 @@ http_endpoints:
       postId: 1
     expected_status: 200
     timeout: 10
+    expected_headers:
+      content-type: "regex:application/json"   # 進階驗證: Header regex
     tags: ["read", "comments"]

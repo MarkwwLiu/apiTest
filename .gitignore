@@ -15,5 +15,6 @@ reports/*.html
 reports/*.csv
 reports/*.json
 generated_tests/*.py
+exports/*.py
 !generated_tests/.gitkeep
 !reports/.gitkeep

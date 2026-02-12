@@ -1,8 +1,8 @@
-# Example: Multi-API scenario (chain) test
+# Example: Multi-API scenario (chain) test with setup/teardown
 # 模擬使用者操作流程：建立文章 → 取得文章 → 新增留言
 
 name: "Example Scenario"
-base_url: "https://jsonplaceholder.typicode.com"
+base_url: "${API_BASE_URL:-https://jsonplaceholder.typicode.com}"
 
 default_headers:
   Content-Type: "application/json"
@@ -35,9 +35,22 @@ http_endpoints:
       email: "test@example.com"
       body: "scenario comment"
 
+  - name: "delete_post"
+    url: "/posts/1"
+    method: "DELETE"
+    expected_status: 200
+    timeout: 10
+
 scenarios:
   - name: "create_then_comment"
     tags: ["scenario", "flow"]
+    # (可選) setup: 在測試前執行
+    # setup:
+    #   - name: "Prepare data"
+    #     endpoint_ref: "create_post"
+    #     save:
+    #       setup_post_id: "id"
+
     steps:
       - name: "Step 1 - Create post"
         endpoint_ref: "create_post"
@@ -49,3 +62,8 @@ scenarios:
 
       - name: "Step 3 - Add comment"
         endpoint_ref: "create_comment"
+
+    # (可選) teardown: 無論成功或失敗都會執行
+    teardown:
+      - name: "Cleanup - Delete post"
+        endpoint_ref: "delete_post"

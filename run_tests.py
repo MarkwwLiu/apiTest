@@ -20,13 +20,30 @@ Usage:
 
     # Run only tests matching a keyword:
     python run_tests.py -k "list_posts"
+
+    # Run only tests with specific tags:
+    python run_tests.py --tags read
+
+    # Skip tests with specific tags:
+    python run_tests.py --skip-tags write
+
+    # Enable debug logging (see request/response details):
+    python run_tests.py --debug
+    # Or via env var:
+    API_TEST_LOG_LEVEL=DEBUG python run_tests.py
+
+    # Export a generated test as standalone script:
+    python run_tests.py --export generated_tests/test_example_http_api_http.py
+    python run_tests.py --export generated_tests/test_example_http_api_http.py --output /tmp/my_test.py
 """
 
 import argparse
+import os
 import subprocess
 import sys
 
 from api_test.core.api_parser import parse_api_directory, parse_api_file
+from api_test.exporters.standalone_exporter import export_standalone
 from api_test.generators.pytest_generator import generate_all, generate_tests
 
 
@@ -67,8 +84,43 @@ def main():
         "-k",
         help="Only run tests matching this keyword expression",
     )
+    parser.add_argument(
+        "--tags",
+        nargs="+",
+        help="Only run tests with these tags (pytest markers)",
+    )
+    parser.add_argument(
+        "--skip-tags",
+        nargs="+",
+        help="Skip tests with these tags (pytest markers)",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging (shows request/response details)",
+    )
+    parser.add_argument(
+        "--export",
+        help="Export a generated test file as a standalone script (all dependencies inlined)",
+    )
+    parser.add_argument(
+        "--output",
+        help="Output path for --export (default: exports/<name>_standalone.py)",
+    )
 
     args = parser.parse_args()
+
+    # Handle --export mode (standalone export, skip normal flow)
+    if args.export:
+        print(f"[Export] Exporting standalone script from: {args.export}")
+        output = export_standalone(args.export, args.output)
+        print(f"[Export] Standalone script written to: {output}")
+        print(f"[Export] Run with: pytest {output} -v")
+        return
+
+    # Set debug logging
+    if args.debug:
+        os.environ["API_TEST_LOG_LEVEL"] = "DEBUG"
 
     # 1. Parse API definitions
     print("[Runner] Loading API definitions...")
@@ -85,7 +137,9 @@ def main():
         http_count = len(cfg.http_endpoints)
         wss_count = len(cfg.wss_endpoints)
         scenario_count = len(cfg.scenarios)
-        print(f"  - {cfg.name}: {http_count} HTTP, {wss_count} WSS, {scenario_count} scenarios")
+        auth_type = cfg.auth.type if cfg.auth else "none"
+        retry = f"retry={cfg.retry.max_retries}" if cfg.retry else "no retry"
+        print(f"  - {cfg.name}: {http_count} HTTP, {wss_count} WSS, {scenario_count} scenarios [auth={auth_type}, {retry}]")
 
     # 2. Generate test files
     print(f"\n[Runner] Generating pytest test files -> {args.output_dir}/")
@@ -107,6 +161,17 @@ def main():
 
     if args.k:
         cmd.extend(["-k", args.k])
+
+    # Tag filtering: -m "read and not write"
+    if args.tags or args.skip_tags:
+        marker_expr_parts = []
+        if args.tags:
+            marker_expr_parts.append(" or ".join(args.tags))
+        if args.skip_tags:
+            for tag in args.skip_tags:
+                marker_expr_parts.append(f"not {tag}")
+        marker_expr = " and ".join(f"({p})" for p in marker_expr_parts)
+        cmd.extend(["-m", marker_expr])
 
     if args.html:
         cmd.extend(["--html=reports/report.html", "--self-contained-html"])
