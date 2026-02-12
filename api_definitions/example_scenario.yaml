@@ -18,12 +18,14 @@ http_endpoints:
       title: "scenario test post"
       body: "created by scenario test"
       userId: 1
+    tags: ["create_post", "write", "posts"]
 
   - name: "get_post"
     url: "/posts/1"
     method: "GET"
     expected_status: 200
     timeout: 10
+    tags: ["get_post", "read", "posts"]
 
   - name: "create_comment"
     url: "/posts/1/comments"
@@ -34,16 +36,18 @@ http_endpoints:
       name: "tester"
       email: "test@example.com"
       body: "scenario comment"
+    tags: ["create_comment", "write", "comments"]
 
   - name: "delete_post"
     url: "/posts/1"
     method: "DELETE"
     expected_status: 200
     timeout: 10
+    tags: ["delete_post", "write", "posts"]
 
 scenarios:
   - name: "create_then_comment"
-    tags: ["scenario", "flow"]
+    tags: ["create_then_comment", "scenario", "flow"]
     # (可選) setup: 在測試前執行
     # setup:
     #   - name: "Prepare data"
