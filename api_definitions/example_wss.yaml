@@ -8,6 +8,9 @@ wss_endpoints:
   - name: "echo_text"
     url: "wss://echo.websocket.org"
     timeout: 10
+    retry:
+      max_retries: 2
+      backoff: [1, 2]
     messages:
       - action: "send"
         data: "hello from api test"
@@ -29,3 +32,25 @@ wss_endpoints:
         expected:
           type: "ping"
     tags: ["wss", "echo", "json"]
+
+  - name: "echo_with_wait"
+    url: "wss://echo.websocket.org"
+    timeout: 10
+    messages:
+      - action: "send"
+        data: "first message"
+      - action: "wait"
+        timeout: 1            # 等待 1 秒
+      - action: "send"
+        data: "second message"
+      - action: "receive"
+        timeout: 5
+    tags: ["wss", "echo"]
+
+  - name: "echo_ping_pong"
+    url: "wss://echo.websocket.org"
+    timeout: 10
+    messages:
+      - action: "ping"
+        data: "keepalive"
+    tags: ["wss", "heartbeat"]
